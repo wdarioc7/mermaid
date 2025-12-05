@@ -1,0 +1,215 @@
+aws cloudformation deploy \
+  --template-file arquitectura-banco.yml \
+  --stack-name BancoModular \
+  --capabilities CAPABILITY_NAMED_IAM
+
+  AWSTemplateFormatVersion: "2010-09-09"
+Description: "Arquitectura AWS basada en módulos del banco: Menú, Pestañas, Items, Informes, Opciones"
+
+Resources:
+
+  ############################################
+  # S3 BUCKET PARA FRONTEND
+  ############################################
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "banco-frontend-${AWS::AccountId}"
+      WebsiteConfiguration:
+        IndexDocument: index.html
+
+  ############################################
+  # POLICY PARA PERMITIR LECTURA DE S3
+  ############################################
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+
+  ############################################
+  # API GATEWAY
+  ############################################
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: "BancoAPI"
+
+  ApiRoot:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: banco
+
+  ############################################
+  # IAM ROLE PARA LAMBDAS
+  ############################################
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "BancoLambdaRole"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: "LambdaBasicExecution"
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:Scan
+                Resource: "*"
+
+  ############################################
+  # LAMBDAS POR MÓDULO
+  ############################################
+  LambdaMenu:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "LambdaMenu"
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return {"statusCode": 200, "body": "Modulo Menu activo"}
+
+  LambdaPestanas:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "LambdaPestanas"
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return {"statusCode": 200, "body": "Modulo Pestañas activo"}
+
+  LambdaItems:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "LambdaItems"
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return {"statusCode": 200, "body": "Modulo Items activo"}
+
+  LambdaInformes:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "LambdaInformes"
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return {"statusCode": 200, "body": "Modulo Informes activo"}
+
+  LambdaOpciones:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "LambdaOpciones"
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return {"statusCode": 200, "body": "Modulo Opciones activo"}
+
+  ############################################
+  # TABLAS DYNAMODB POR MÓDULO
+  ############################################
+  TablaMenu:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: "Menu"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "Id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "Id"
+          KeyType: "HASH"
+
+  TablaPestanas:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: "Pestanas"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "Id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "Id"
+          KeyType: "HASH"
+
+  TablaItems:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: "Items"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "Id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "Id"
+          KeyType: "HASH"
+
+  TablaInformes:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: "Informes"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "Id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "Id"
+          KeyType: "HASH"
+
+  TablaOpciones:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: "Opciones"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: "Id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "Id"
+          KeyType: "HASH"
+
+Outputs:
+
+  URLFrontEnd:
+    Description: "URL del frontend en S3"
+    Value: !Sub "http://${FrontendBucket}.s3-website-${AWS::Region}.amazonaws.com"
+
+  ApiId:
+    Description: "ID de la API Gateway"
+    Value: !Ref ApiGateway
