@@ -1,0 +1,58 @@
+graph TB
+    subgraph Contenido del Módulo Menu del Banco
+        Cuerpo[Contenido del Módulo Menu]
+        Pestañas[Pestañas]
+        Items[Listado de Items]
+        Informes[Listado de Informes]
+        Opciones[Listado de Opciones]
+    end
+
+    Cuerpo --> Pestañas
+    Cuerpo --> Items
+    Cuerpo --> Informes
+    Cuerpo --> Opciones
+
+    subgraph Pestañas
+        Pestaña1[Página 1]
+        Pestaña2[Página 2]
+        Pestaña3[Página 3]
+        Caja1[Contenido de la Página 1]
+        Caja2[Contenido de la Página 2]
+        Caja3[Contenido de la Página 3]
+    end
+
+    Pestañas --> Pestaña1
+    Pestañas --> Pestaña2
+    Pestañas --> Pestaña3
+
+    subgraph Items
+        Item1[Crear Cuenta]
+        Item2[Ver Extrato]
+        Item3[Transferir Dinero]
+        Item4[Cerrar Sesión]
+    end
+
+    Items --> Item1
+    Items --> Item2
+    Items --> Item3
+    Items --> Item4
+
+    subgraph Informes
+        Informe1[Listado de Operaciones]
+        Informe2[Listado de Cuentas]
+        Informe3[Listado de Transacciones]
+    end
+
+    Informes --> Informe1
+    Informes --> Informe2
+    Informes --> Informe3
+
+    subgraph Opciones
+        Opción1[Cambiar Contraseña]
+        Opción2[Revisar Historial]
+        Opción3[Solicitar Apoyo]
+    end
+
+    Opciones --> Opción1
+    Opciones --> Opción2
+    Opciones --> Opción3
